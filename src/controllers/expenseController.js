@@ -139,3 +139,37 @@ exports.updateExpense = (req, res) => {
     });
 
 };
+
+exports.getExpenseSummary = (req, res) => {
+
+    const user_id = req.user.id;
+    const query = `
+        SELECT
+        IFNULL(SUM(amount),0) as total,
+        IFNULL(SUM(CASE WHEN DATE(created_at) = CURDATE() THEN amount ELSE 0 END),0) as today,
+        IFNULL(SUM(CASE 
+            WHEN MONTH(created_at) = MONTH(CURDATE()) 
+            AND YEAR(created_at) = YEAR(CURDATE())
+            THEN amount 
+            ELSE 0 
+        END),0) as this_month,
+        COUNT(*) as total_transactions
+        FROM notes
+        WHERE user_id = ?
+    `;
+
+    db.query(query, [user_id], (err, result) => {
+        if (err) {
+            return res.status(500).json({
+                message: "Gagal mengambil ringkasan pengeluaran",
+                error: err
+            });
+        }
+
+        res.json({
+            message: "Summary berhasil diambil",
+            data: result[0]
+        });
+    });
+};
+

@@ -5,6 +5,7 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 
+const startWhatsApp = require("./whatsapp/whatsappClient");
 
 const app = express();
 const PORT = 3000;
@@ -25,6 +26,11 @@ app.get("/api/test", (req, res) => {
   res.json({
     message: "API berjalan"
   });
+});
+
+
+startWhatsApp().catch(err => {
+  console.error("WhatsApp Error:", err);
 });
 
 /*

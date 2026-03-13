@@ -9,4 +9,6 @@ router.get("/expenses", authMiddleware, expenseController.getExpense);
 router.delete("/expenses/:id", authMiddleware, expenseController.deleteExpense);
 router.put("/expenses/:id", authMiddleware, expenseController.updateExpense);
 
+router.get("/expenses/summary", authMiddleware, expenseController.getExpenseSummary);
+
 module.exports = router;
