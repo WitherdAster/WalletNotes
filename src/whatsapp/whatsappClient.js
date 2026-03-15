@@ -5,6 +5,7 @@ const {
     fetchLatestBaileysVersion,
 } = require("@whiskeysockets/baileys");
 
+
 const qrcode = require("qrcode-terminal");
 const pino = require("pino");
 const readline = require("readline");
@@ -117,14 +118,13 @@ async function startWhatsApp() {
         // console.log(`📩 ${sender} : ${text}`);
 
 
-        let sender;
+        let senderJid;
 
         if (message.key.participant) {
-            sender = message.key.participant;
+            senderJid = message.key.participant;
         } else {
-            sender = message.key.remoteJid;
+            senderJid = message.key.remoteJid;
         }
-        sender = sender.split("@")[0];
 
         // const senderNumber = sender.getPhoneNumber();
 
@@ -133,10 +133,10 @@ async function startWhatsApp() {
             message.message.extendedTextMessage?.text;
         if (!text) return;
 
-        console.log(`📩 ${sender} : ${text}`);
+        console.log(`📩 ${senderJid} : ${text}`);
 
 
-        handleMessage(sock, sender, text);
+        handleMessage(sock, senderJid, text);
 
     });
 

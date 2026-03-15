@@ -2,9 +2,7 @@ const db = require("../config/database");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-
-exports.register = (req, res) => {
-
+exports.register = async (req, res) => {
     const { name, phone, password } = req.body;
 
     // VALIDASI INPUT
@@ -14,62 +12,35 @@ exports.register = (req, res) => {
         });
     }
 
-    // CEK NOMOR SUDAH TERDAFTAR
-    const checkUser = "SELECT * FROM users WHERE phone = ?";
+    try {
+        // CEK NOMOR SUDAH TERDAFTAR
+        const [rows] = await db.promise().query("SELECT * FROM users WHERE phone = ?", [phone]);
 
-    db.query(checkUser, [phone], async (err, result) => {
-
-        if (err) {
-            return res.status(500).json({
-                message: "Database error",
-                error: err
-            });
-        }
-
-        if (result.length > 0) {
+        if (rows.length > 0) {
             return res.status(400).json({
                 message: "Phone already registered"
             });
         }
 
-        try {
+        // HASH PASSWORD
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-            // HASH PASSWORD
-            const hashedPassword = await bcrypt.hash(password, 10);
+        // INSERT USER (wa_id will be set later when the user sends a WhatsApp message)
+        await db.promise().query("INSERT INTO users (name, phone, password) VALUES (?, ?, ?)", [name, phone, hashedPassword]);
 
-            // INSERT USER
-            const insertUser = "INSERT INTO users (name, phone, password) VALUES (?, ?, ?)";
+        res.json({
+            message: "User registered successfully"
+        });
 
-            db.query(insertUser, [name, phone, hashedPassword], (err, result) => {
-
-                if (err) {
-                    return res.status(500).json({
-                        message: "Insert user failed",
-                        error: err
-                    });
-                }
-
-                res.json({
-                    message: "User registered successfully"
-                });
-
-            });
-
-        } catch (error) {
-
-            res.status(500).json({
-                message: "Password hashing failed",
-                error: error
-            });
-
-        }
-
-    });
-
+    } catch (error) {
+        res.status(500).json({
+            message: "Error",
+            error: error.message
+        });
+    }
 };
 
-exports.login = (req, res) => {
-
+exports.login = async (req, res) => {
     const { phone, password } = req.body;
 
     // VALIDASI INPUT
@@ -79,58 +50,48 @@ exports.login = (req, res) => {
         });
     }
 
-    // CEK USER BERDASARKAN PHONE
-    const query = "SELECT * FROM users WHERE phone = ?";
+    try {
+        // CEK USER BERDASARKAN PHONE
+        const [rows] = await db.promise().query("SELECT * FROM users WHERE phone = ?", [phone]);
 
-    db.query(query, [phone], async (err, result) => {
-
-        if (err) {
-            return res.status(500).json({
-                message: "Database error",
-                error: err
-            });
-        }
-
-        if (result.length === 0) {
+        if (rows.length === 0) {
             return res.status(400).json({
                 message: "User not found"
             });
         }
 
-        const user = result[0];
+        const user = rows[0];
 
         // CEK PASSWORD
-        const match = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        if (!match) {
+        if (!isPasswordValid) {
             return res.status(400).json({
-                message: "Wrong password"
+                message: "Invalid password"
             });
         }
 
-        // BUAT TOKEN LOGIN
-        // const token = jwt.sign(
-        //     { id: user.id, phone: user.phone },
-        //     SECRET_KEY,
-        //     { expiresIn: "7d" }
-        // );
-
+        // GENERATE JWT TOKEN
         const token = jwt.sign(
-            { id: user.user_id, phone: user.phone },
+            { id: user.user_id, name: user.name, phone: user.phone },
             process.env.JWT_SECRET,
-            { expiresIn: "7d" }
+            { expiresIn: "1h" }
         );
 
         res.json({
-            message: "Login success",
+            message: "Login successful",
             token: token,
             user: {
-                id: user.id,
+                id: user.user_id,
                 name: user.name,
                 phone: user.phone
             }
         });
 
-    });
-
+    } catch (error) {
+        res.status(500).json({
+            message: "Database error",
+            error: error.message
+        });
+    }
 };
