@@ -63,7 +63,7 @@ async function handleMessage(sock, senderJid, text) {
         // Ask the user to reply with phone + password to link their account
         pendingRegistrations.set(senderJid, true);
         await sock.sendMessage(senderJid, {
-            text: "Hi, Silahkan login dulu menggunakan format:\n nomor,password (contoh: 6281234567890,password123)\n untuk menghubungkan WhatsApp dengan akun Anda."
+            text: "Hi, Silahkan login dulu menggunakan format:\nNomor,Password\n(contoh: 6281234567890,password123)\nUntuk menghubungkan WhatsApp dengan akun Anda."
         });
 
         return;
