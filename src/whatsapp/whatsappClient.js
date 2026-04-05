@@ -65,40 +65,6 @@ async function startWhatsApp() {
         }
     })
 
-    // sock.ev.on("creds.update", saveCreds);
-
-    // sock.ev.on("connection.update", (update) => {
-
-    //     const { connection, lastDisconnect, qr } = update;
-
-    //     if (qr) {
-    //         console.log("\n📱 Scan QR Code Below:\n");
-    //         qrcode.generate(qr, { small: true });
-    //     }
-
-    //     if (connection === "open") {
-    //         console.log("✅ WhatsApp Connected!");
-    //     }
-
-    //     // if (connection === "close") {
-
-    //     //     const reason = lastDisconnect?.error?.output?.statusCode;
-
-    //     //     console.log("❌ Connection Closed");
-
-    //     //     if (reason === DisconnectReason.loggedOut) {
-    //     //         console.log("⚠️ Logged out. Please delete auth folder and scan QR again.");
-    //     //     } else {
-    //     //         console.log("🔄 Reconnecting in 5 seconds...");
-
-    //     //         setTimeout(() => {
-    //     //             startWhatsApp();
-    //     //         }, 5000);
-    //     //     }
-    //     // }
-
-    // });
-
     sock.ev.on("messages.upsert", async (msg) => {
 
         const message = msg.messages[0];
@@ -106,17 +72,6 @@ async function startWhatsApp() {
         if (!message.message) return;
 
         if (message.key.fromMe) return;
-
-        // const sender = message.key.remoteJid;
-
-        // const text =
-        //     message.message.conversation ||
-        //     message.message.extendedTextMessage?.text;
-
-        // if (!text) return;
-
-        // console.log(`📩 ${sender} : ${text}`);
-
 
         let senderJid;
 
