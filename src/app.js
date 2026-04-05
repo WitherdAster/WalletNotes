@@ -5,37 +5,49 @@ const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const expenseRoutes = require("./routes/expenseRoutes");
 
-const startWhatsApp = require("./whatsapp/whatsappClient");
+// Update this import
+const { startWhatsApp, getSocket } = require("./whatsapp/whatsappClient");
 
 const app = express();
-const PORT = process.env.MYSQLPORT;
+const PORT = process.env.PORT || 3000; // Use PORT env
 
 app.use(cors());
 app.use(express.json());
 
-/*
-ROUTES
-*/
+// Routes
 app.use("/api", authRoutes);
 app.use("/api", expenseRoutes);
 
-/*
-TEST API
-*/
-app.get("/api/test", (req, res) => {
-  res.json({
-    message: "API berjalan"
-  });
+// --- NEW WHATSAPP ADMIN ROUTES ---
+let pairingCode = null;
+
+app.post("/api/whatsapp/connect", async (req, res) => {
+    try {
+        const { phoneNumber } = req.body;
+        const sock = getSocket();
+
+        if (!sock) return res.status(500).json({ status: "error", message: "Socket not ready" });
+
+        // Request pairing code from Baileys
+        pairingCode = await sock.requestPairingCode(phoneNumber.trim());
+        
+        res.json({ status: "success", message: "Pairing code requested" });
+    } catch (err) {
+        res.status(500).json({ status: "error", message: err.message });
+    }
 });
 
-
-startWhatsApp().catch(err => {
-  console.error("WhatsApp Error:", err);
+app.get("/api/whatsapp/pairing-code", (req, res) => {
+    if (pairingCode) {
+        res.json({ status: "success", pairingCode: pairingCode });
+    } else {
+        res.status(404).json({ status: "error", message: "Code not generated yet" });
+    }
 });
 
-/*
-START SERVER
-*/
+// Start WhatsApp
+startWhatsApp().catch(err => console.error("WhatsApp Error:", err));
+
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server running on port ${PORT}`);
 });
