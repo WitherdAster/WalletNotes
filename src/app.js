@@ -45,9 +45,10 @@ app.get("/api/whatsapp/pairing-code", (req, res) => {
     }
 });
 
-// Start WhatsApp
-startWhatsApp().catch(err => console.error("WhatsApp Error:", err));
-
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    
+    // 🔥 Start WhatsApp AFTER the server is already listening
+    startWhatsApp().catch(err => {        console.error("WhatsApp Error during startup:", err);
+    });
 });

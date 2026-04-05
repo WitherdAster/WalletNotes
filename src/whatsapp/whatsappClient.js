@@ -3,16 +3,19 @@ const {
     useMultiFileAuthState,
     fetchLatestBaileysVersion,
 } = require("@whiskeysockets/baileys");
-
-const pino = require("pino");
+const path = require('path');const pino = require("pino");
 const handleMessage = require("./messageHandler");
 
 const logger = pino({ level: "silent" });
-let sock; // Top-level variable to store the socket
+let sock;
 
 async function startWhatsApp() {
     console.log("🚀 Starting WhatsApp Bot...");
-    const { state, saveCreds } = await useMultiFileAuthState("auth");
+    
+    // 🔥 Changed "auth" to "whatsapp_session_data" and made it an absolute path
+    const sessionDir = path.join(__dirname, '../../whatsapp_session_data');
+    const { state, saveCreds } = await useMultiFileAuthState(sessionDir);
+    
     const { version } = await fetchLatestBaileysVersion();
 
     sock = makeWASocket({
@@ -29,7 +32,7 @@ async function startWhatsApp() {
         const { connection } = update;
         if (connection === "close") {
             console.log("❌ Koneksi Terputus, Mencoba Menyambung Ulang");
-            startWhatsApp();
+            setTimeout(startWhatsApp, 5000); // Wait 5s before reconnecting
         } else if (connection === "open") {
             console.log("✔ Bot Berhasil Terhubung Ke WhatsApp");
         }
@@ -46,5 +49,4 @@ async function startWhatsApp() {
     return sock;
 }
 
-// Export both the starter and a way to get the current socket
 module.exports = { startWhatsApp, getSocket: () => sock };
